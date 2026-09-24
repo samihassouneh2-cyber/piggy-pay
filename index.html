@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PiggyPay</title>
 <meta name="theme-color" content="#6C5CE7">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PiggyPay">
@@ -79,13 +81,15 @@ label{font-weight:700;font-size:13px;color:#69649a;margin-top:12px;display:block
 .hist .who{font-size:11px;color:#9691c2;}
 .hist .amt.pos{color:var(--mint);font-weight:800;}
 .hist .amt.neg{color:var(--danger);font-weight:800;}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:50;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:120;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 .back-link{color:#7b74ad;font-weight:700;font-size:14px;cursor:pointer;display:inline-block;margin-bottom:6px;}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;}
 .confetti span{position:absolute;top:-20px;font-size:20px;animation:fall 1.4s ease-in forwards;}
 @keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.2;}}
 .hidden{display:none!important;}
+.pay-modal{position:fixed;inset:0;background:rgba(27,26,58,.55);z-index:90;display:flex;align-items:flex-end;justify-content:center;}
+.pay-sheet{background:#fff;width:100%;max-width:440px;border-radius:24px 24px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px));animation:fadeUp .25s ease both;}
 .feat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:12px;text-align:start;}
 .feat .ficon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
 .feat b{font-family:'Baloo 2';font-size:16px;display:block;}
@@ -104,6 +108,7 @@ label{font-weight:700;font-size:13px;color:#69649a;margin-top:12px;display:block
 <body>
 <div id="app"></div>
 <div class="toast" id="toast"></div>
+<div class="pay-modal hidden" id="payModal"></div>
 <div class="scan-modal hidden" id="scanModal">
   <video id="scanVideo" playsinline muted autoplay></video>
   <canvas id="scanCanvas" class="hidden"></canvas>
@@ -131,20 +136,13 @@ Object.assign(T.ar,{featQrTitle:"أرسل المال برمز QR",featQrDesc:"ا
 let deferredInstall=null;
 const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 (function setupPWA(){
-  try{
-    const mk=n=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');
-      x.fillStyle='#6C5CE7';x.fillRect(0,0,n,n);x.font=(n*0.6)+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐷',n/2,n/2+n*0.04);return c.toDataURL('image/png');};
-    const i192=mk(192), i512=mk(512);
-    const l=document.createElement('link');l.rel='apple-touch-icon';l.href=i192;document.head.appendChild(l);
-    const m={name:'PiggyPay',short_name:'PiggyPay',start_url:location.href.split('#')[0],display:'standalone',background_color:'#F6F3FF',theme_color:'#6C5CE7',
-      icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
-    const ml=document.createElement('link');ml.rel='manifest';ml.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));document.head.appendChild(ml);
-  }catch(e){}
+  try{ if('serviceWorker' in navigator && location.protocol!=='file:') navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
   window.addEventListener('appinstalled',()=>{deferredInstall=null;toast(t('installedMsg'));if(state&&state.route&&state.route.screen==='home')render();});
 })();
 async function installApp(){
   if(deferredInstall){ deferredInstall.prompt(); try{ await deferredInstall.userChoice; }catch(e){} deferredInstall=null; return; }
+  if(!window.isSecureContext){ alert('Installing needs the app to be opened from an https:// web address (not a local file or preview).'); return; }
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
   alert(ios?t('installIos'):t('installTip'));
 }
@@ -159,7 +157,7 @@ Object.assign(T.ar,{nfcPay:"📡 اضغط للدفع (NFC)",nfcWrite:"اكتب �
 let nfcAbort=null;
 function nfcOK(){ return 'NDEFReader' in window; }
 async function nfcPay(){
-  if(!nfcOK()){ toast(t('nfcNone')); return; }
+  if(!nfcOK()||!window.isSecureContext){ toast(window.isSecureContext?t('nfcNone'):'NFC needs an https:// web address'); return; }
   try{
     if(nfcAbort) nfcAbort.abort();
     nfcAbort=new AbortController();
@@ -178,7 +176,7 @@ async function nfcPay(){
   }catch(err){ toast(t('nfcFail')); }
 }
 async function nfcWrite(){
-  if(!nfcOK()){ toast(t('nfcNone')); return; }
+  if(!nfcOK()||!window.isSecureContext){ toast(window.isSecureContext?t('nfcNone'):'NFC needs an https:// web address'); return; }
   const k=state.kids.find(x=>x.id===state.selfId); if(!k) return;
   const a=parseFloat(($('qrAmt')||{}).value);
   try{
@@ -251,7 +249,7 @@ function money(n){ return sym()+Number(n||0).toFixed(2); }
 function uid(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
 function toast(msg){
   const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 1800);
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'), 3500);
 }
 function confettiBurst(){
   const el = document.createElement('div'); el.className='confetti';
@@ -563,9 +561,8 @@ function closeScan(){
 function parseQR(x){ const m=String(x).match(/(?:piggypay:|pay=)([^:&\s]+)(?::([\d.]+))?/i); return m?{code:decodeURIComponent(m[1]),amt:parseFloat(m[2])||0}:{code:String(x).trim(),amt:0}; }
 function onScanned(data){
   const p=parseQR(data);
-  if($('sendToManual')) $('sendToManual').value=p.code;
-  if($('sendAmt')&&p.amt) $('sendAmt').value=p.amt;
-  if(p.amt) pay(p.code,p.amt,'💸'); else toast('✓ '+p.code);
+  if(!p.code){ toast(t('noQr')); return; }
+  pay(p.code,p.amt,'💸');
 }
 function scanFile(f){
   const img=new Image();
@@ -587,13 +584,30 @@ function drawQR(){
   new QRCode(box,{text:'piggypay:'+k.paycode+(a>0?':'+a:''),width:140,height:140,correctLevel:QRCode.CorrectLevel.M});
 }
 async function pay(code,amt,note){
-  const me=state.kids.find(x=>x.id===state.selfId);
-  if(me && amt>me.balance){ toast(t('notEnough')); return; }
-  let who; try{ who=await rpc('pp_lookup',{p_token:state.token,p_code:code}); }catch(e){ toast(e.message); return; }
-  if(!confirm(t('payTo')+' '+who.name+' — '+money(amt)+' ?')) return;
-  try{ await act('pp_pay',{p_code:code,p_amount:amt,p_note:note||'💸'}); confettiBurst(); toast(t('sent')); go('kidHome',{kidId:state.selfId,tab:'history'}); }catch(e){}
+  let who;
+  try{ who=await rpc('pp_lookup',{p_token:state.token,p_code:code}); }
+  catch(e){ toast(e.message||t('noQr')); return; }
+  if(!who||!who.name){ toast(t('noQr')+': '+code); return; }
+  const m=$('payModal');
+  m.innerHTML=`<div class="pay-sheet">
+    <div style="display:flex;align-items:center;gap:12px;"><div class="avatar">${esc((who.name[0]||'?').toUpperCase())}</div>
+    <div><div style="font-size:12px;color:#7b74ad;">${t('payTo')}</div><div style="font-family:'Baloo 2';font-size:20px;font-weight:800;">${esc(who.name)}</div></div></div>
+    <div class="field"><label>${t('amount')}</label><input type="number" min="0.01" step="0.01" id="pmAmt" value="${amt>0?amt:''}" placeholder="${sym()}0.00"></div>
+    <button class="card-btn primary" id="pmGo">${t('sendBtn')}</button>
+    <button class="card-btn ghost" id="pmCancel" style="margin-top:4px;">${t('back')}</button></div>`;
+  m.classList.remove('hidden');
+  const close=()=>{ m.classList.add('hidden'); m.innerHTML=''; };
+  $('pmCancel').onclick=close;
+  m.onclick=e=>{ if(e.target===m) close(); };
+  $('pmGo').onclick=async()=>{
+    const a=parseFloat($('pmAmt').value);
+    if(!(a>0)){ toast(t('amount')); return; }
+    const me=state.kids.find(x=>x.id===state.selfId);
+    if(me&&a>me.balance){ toast(t('notEnough')); return; }
+    try{ await act('pp_pay',{p_code:code,p_amount:a,p_note:note||'💸'}); close(); confettiBurst(); toast(t('sent')); go('kidHome',{kidId:state.selfId,tab:'history'}); }catch(e){}
+  };
+  if(!(amt>0)) setTimeout(()=>{ const i=$('pmAmt'); if(i) i.focus(); },50);
 }
-
 function wireScreen(){
   const r = state.route.screen;
   const back = id=>{ const el=document.getElementById(id); if(el) el.onclick=()=>go(r==='parentHome'||r==='kidHome'?'home':'home'); };
@@ -683,8 +697,7 @@ function wireScreen(){
       $('btnSend').onclick = ()=>{
         const code=$('sendToManual').value.trim(), amt=parseFloat($('sendAmt').value), note=$('sendNote').value.trim();
         if(!code){ toast(t('toWho')); return; }
-        if(!(amt>0)){ toast(t('amount')); return; }
-        pay(code,amt,note);
+        pay(code,amt>0?amt:0,note);
       };
     }
   }
