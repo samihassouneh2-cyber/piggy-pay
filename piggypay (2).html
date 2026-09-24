@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PiggyPay</title>
+<meta name="theme-color" content="#6C5CE7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PiggyPay">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F3FF; --card1:#1B1A3A; --card2:#4A3AA8; --ink:#26234A;
+  --purple:#6C5CE7; --purple-d:#5546c9; --mint:#00C9A0; --yellow:#FFC857; --pink:#FF6FA0;
+  --surface:#FFFFFF; --line:#E7E1FA; --danger:#FF6B6B;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Nunito',sans-serif;min-height:100%;}
+h1,h2,h3,.brand{font-family:'Baloo 2',sans-serif;}
+[dir="rtl"] .flipcard, [dir="rtl"] .row{direction:rtl;}
+#app{max-width:440px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;overflow-x:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 6px;}
+.brand{font-size:22px;font-weight:800;color:var(--purple-d);display:flex;align-items:center;gap:6px;}
+.brand .oink{display:inline-block;transform:rotate(-8deg);}
+.pickers{display:flex;gap:6px;}
+select.mini{font-family:'Nunito';font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px 6px;color:var(--ink);}
+.screen{padding:6px 18px 90px;animation:fadeUp .35s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-btn{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;width:100%;text-align:center;font-family:'Baloo 2';font-size:18px;font-weight:700;color:var(--ink);margin-top:14px;cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;box-shadow:0 2px 0 var(--line);}
+.card-btn:active{transform:scale(.97);}
+.card-btn.primary{background:var(--purple);color:#fff;border:none;box-shadow:0 4px 0 var(--purple-d);}
+.card-btn.primary:active{box-shadow:0 1px 0 var(--purple-d);transform:translateY(3px) scale(.99);}
+.card-btn.ghost{background:transparent;box-shadow:none;color:var(--purple-d);}
+.emoji-big{font-size:54px;text-align:center;margin:18px 0 4px;}
+input[type=text],input[type=password],input[type=number],select{width:100%;padding:13px 14px;border-radius:14px;border:2px solid var(--line);font-family:'Nunito';font-size:16px;margin-top:8px;background:#fff;color:var(--ink);}
+input:focus,select:focus{outline:none;border-color:var(--purple);}
+label{font-weight:700;font-size:13px;color:#69649a;margin-top:12px;display:block;}
+.field{margin-bottom:6px;}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;}
+.pinpad button{padding:16px;border-radius:14px;border:none;background:#fff;box-shadow:0 2px 0 var(--line);font-family:'Baloo 2';font-size:20px;font-weight:700;color:var(--ink);}
+.pinpad button:active{transform:scale(.94);}
+.dots{display:flex;justify-content:center;gap:10px;margin:16px 0;}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--purple);}
+.dot.filled{background:var(--purple);}
+.flipcard{width:100%;aspect-ratio:1.6/1;perspective:1000px;margin-top:14px;}
+.flipcard-inner{position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d;cursor:pointer;}
+.flipcard.flipped .flipcard-inner{transform:rotateY(180deg);}
+.face{position:absolute;inset:0;border-radius:20px;backface-visibility:hidden;padding:20px;color:#fff;background:linear-gradient(135deg,var(--card1),var(--card2) 70%,var(--pink));box-shadow:0 10px 24px rgba(70,50,150,.35);display:flex;flex-direction:column;justify-content:space-between;}
+.face.back{transform:rotateY(180deg);background:linear-gradient(135deg,var(--card2),var(--card1) 70%);}
+.face .brandmini{font-family:'Baloo 2';font-weight:800;font-size:15px;opacity:.9;}
+.balance{font-family:'Baloo 2';font-size:34px;font-weight:800;}
+.balance-label{font-size:11px;opacity:.75;letter-spacing:.5px;}
+.cardnum{font-size:16px;letter-spacing:3px;font-family:monospace;}
+.stripe{height:34px;background:#1a1a2b;margin:6px -20px;}
+.tabs{display:flex;gap:8px;margin:18px 0 10px;background:#EFE9FF;padding:5px;border-radius:14px;}
+.tab{flex:1;text-align:center;padding:9px 4px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;color:#7b74ad;}
+.tab.active{background:#fff;color:var(--purple-d);box-shadow:0 2px 4px rgba(90,70,200,.15);}
+.task{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;border:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.task .info{flex:1;min-width:90px;}
+.task .price{font-family:'Baloo 2';font-weight:800;color:var(--mint);}
+.pill{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:700;}
+.pill.pending{background:#FFF1D6;color:#B9861B;}
+.pill.done{background:#DEFBF3;color:#0E9C7C;}
+.pill.rejected{background:#FFE1E1;color:#C23B3B;}
+.smallbtn{border:none;background:var(--purple);color:#fff;padding:8px 12px;border-radius:10px;font-weight:700;font-size:13px;}
+.smallbtn.approve{background:var(--mint);}
+.smallbtn.reject{background:var(--danger);}
+.kidchip{display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--line);flex-wrap:wrap;}
+.kidchip .actions{display:flex;gap:6px;width:100%;margin-top:8px;}
+.avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-family:'Baloo 2';font-size:18px;flex-shrink:0;}
+.qr{width:160px;height:160px;margin:14px auto;background:#fff;border-radius:14px;padding:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;}
+.paycode{text-align:center;font-family:monospace;letter-spacing:2px;font-weight:700;color:var(--purple-d);}
+.hist{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.hist .who{font-size:11px;color:#9691c2;}
+.hist .amt.pos{color:var(--mint);font-weight:800;}
+.hist .amt.neg{color:var(--danger);font-weight:800;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:50;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+.back-link{color:#7b74ad;font-weight:700;font-size:14px;cursor:pointer;display:inline-block;margin-bottom:6px;}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;}
+.confetti span{position:absolute;top:-20px;font-size:20px;animation:fall 1.4s ease-in forwards;}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.2;}}
+.hidden{display:none!important;}
+.feat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:12px;text-align:start;}
+.feat .ficon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.feat b{font-family:'Baloo 2';font-size:16px;display:block;}
+.feat span.d{font-size:12.5px;color:#7b74ad;}
+.feat .smallbtn{margin-inline-start:auto;flex-shrink:0;}
+.feat.install{background:linear-gradient(135deg,#F0EBFF,#FFF0F6);}
+.hint{font-size:12px;color:#9691c2;margin-top:4px;}
+.totals{display:flex;gap:8px;margin-bottom:14px;}
+.totalbox{flex:1;background:#fff;border-radius:14px;padding:10px;text-align:center;border:1px solid var(--line);}
+.totalbox b{display:block;font-family:'Baloo 2';font-size:18px;}
+.scan-modal{position:fixed;inset:0;background:#000;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.scan-modal video{width:100%;max-width:440px;}
+.scan-modal button{margin-top:16px;padding:12px 26px;border-radius:14px;border:none;background:var(--purple);color:#fff;font-weight:800;font-family:'Baloo 2';font-size:16px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<div class="scan-modal hidden" id="scanModal">
+  <video id="scanVideo" playsinline muted autoplay></video>
+  <canvas id="scanCanvas" class="hidden"></canvas>
+  <button id="btnCloseScan">✕</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
+<script>
+const T = {
+en:{appname:"PiggyPay",imParent:"I'm a Parent",imKid:"I'm a Kid",createAccount:"Create your account",yourName:"Your name",choosePin:"Choose a 4-digit PIN",createBtn:"Create Account",parentLogin:"Parent Login",enterPin:"Enter your PIN",addKid:"+ Add a kid",kids:"Kids",balance:"Balance",addTask:"+ Add a task",taskTitle:"What's the task?",taskPrice:"Reward amount",add:"Add",pending:"Waiting for approval",approve:"Approve",reject:"Reject",tasksFor:"Tasks",back:"Back",logout:"Log out",whoAreYou:"Who are you?",kidPin:"Enter your PIN",myTasks:"My Tasks",markDone:"Mark done",send:"Send",history:"History",noTasks:"No tasks yet — ask your parent!",sendMoney:"Send Money",toWho:"Send to (Pay Code)",amount:"Amount",note:"Note (optional)",sendBtn:"Send it!",myCode:"My Pay Code — let someone scan it",receive:"Receive",noHistory:"Nothing here yet.",settings:"Settings",language:"Language",currency:"Currency",wrongPin:"Wrong PIN, try again",notEnough:"Not enough balance!",sent:"Money sent!",approved:"Task approved!",rejectedMsg:"Task rejected",kidNamePh:"Kid's name",kidPinPh:"4-digit PIN for kid",card:"Card",tapCard:"Tap the card to flip it",noKidsYet:"No kids added yet.",resetAll:"Reset app (delete everything)",confirmReset:"Delete all data and start over?",installTip:"Install this app: open the browser menu and choose 'Add to Home screen'.",altLoginTip:"Kids can log in from any device — the app saves everything to your family's account.",scanQr:"📷 Scan QR code",closeScan:"Close",cameraDenied:"Couldn't open the camera",give:"Give money",giveTitle:"Give money to",directAmount:"Amount to give",directNote:"Note (optional)",kidsTab:"Kids",historyTab:"History",totalGiven:"Total given",totalWon:"Total won",totalLost:"Tasks lost",noParentHistory:"No activity yet.",loading:"Loading your account…",scanHelp:"Point your camera at a PiggyPay QR code",familyCode:"Family code",continue:"Continue",newFamily:"New family? Create an account",shareCode:"Family code (kids use it to log in)",payTo:"Pay",qrAmount:"Amount to request (optional)",noQr:"No QR code found in that photo"},
+es:{appname:"PiggyPay",imParent:"Soy el padre/madre",imKid:"Soy un niño/a",createAccount:"Crea tu cuenta",yourName:"Tu nombre",choosePin:"Elige un PIN de 4 dígitos",createBtn:"Crear cuenta",parentLogin:"Acceso de padres",enterPin:"Ingresa tu PIN",addKid:"+ Agregar niño/a",kids:"Niños",balance:"Saldo",addTask:"+ Agregar tarea",taskTitle:"¿Cuál es la tarea?",taskPrice:"Recompensa",add:"Agregar",pending:"Esperando aprobación",approve:"Aprobar",reject:"Rechazar",tasksFor:"Tareas",back:"Atrás",logout:"Cerrar sesión",whoAreYou:"¿Quién eres?",kidPin:"Ingresa tu PIN",myTasks:"Mis tareas",markDone:"Marcar hecho",send:"Enviar",history:"Historial",noTasks:"Sin tareas — ¡pregunta a tus padres!",sendMoney:"Enviar dinero",toWho:"Enviar a (Código)",amount:"Cantidad",note:"Nota (opcional)",sendBtn:"¡Enviar!",myCode:"Mi código — que lo escaneen",receive:"Recibir",noHistory:"Nada por aquí todavía.",settings:"Ajustes",language:"Idioma",currency:"Moneda",wrongPin:"PIN incorrecto, intenta de nuevo",notEnough:"¡Saldo insuficiente!",sent:"¡Dinero enviado!",approved:"¡Tarea aprobada!",rejectedMsg:"Tarea rechazada",kidNamePh:"Nombre del niño/a",kidPinPh:"PIN de 4 dígitos",card:"Tarjeta",tapCard:"Toca la tarjeta para girarla",noKidsYet:"Aún no hay niños.",resetAll:"Reiniciar app (borrar todo)",confirmReset:"¿Borrar todo y empezar de nuevo?",installTip:"Para instalar: abre el menú del navegador y elige 'Añadir a pantalla de inicio'.",altLoginTip:"Los niños pueden entrar desde cualquier dispositivo — todo se guarda en la cuenta familiar.",scanQr:"📷 Escanear código QR",closeScan:"Cerrar",cameraDenied:"No se pudo abrir la cámara",give:"Dar dinero",giveTitle:"Dar dinero a",directAmount:"Cantidad a dar",directNote:"Nota (opcional)",kidsTab:"Niños",historyTab:"Historial",totalGiven:"Total dado",totalWon:"Total ganado",totalLost:"Tareas perdidas",noParentHistory:"Sin actividad todavía.",loading:"Cargando tu cuenta…",scanHelp:"Apunta la cámara a un código QR de PiggyPay"},
+fr:{appname:"PiggyPay",imParent:"Je suis un parent",imKid:"Je suis un enfant",createAccount:"Crée ton compte",yourName:"Ton nom",choosePin:"Choisis un code à 4 chiffres",createBtn:"Créer le compte",parentLogin:"Accès parent",enterPin:"Entre ton code",addKid:"+ Ajouter un enfant",kids:"Enfants",balance:"Solde",addTask:"+ Ajouter une tâche",taskTitle:"Quelle est la tâche ?",taskPrice:"Récompense",add:"Ajouter",pending:"En attente d'approbation",approve:"Approuver",reject:"Refuser",tasksFor:"Tâches",back:"Retour",logout:"Déconnexion",whoAreYou:"Qui es-tu ?",kidPin:"Entre ton code",myTasks:"Mes tâches",markDone:"Marquer terminé",send:"Envoyer",history:"Historique",noTasks:"Aucune tâche — demande à tes parents !",sendMoney:"Envoyer de l'argent",toWho:"Envoyer à (code)",amount:"Montant",note:"Note (optionnel)",sendBtn:"Envoyer !",myCode:"Mon code — fais-le scanner",receive:"Recevoir",noHistory:"Rien ici pour l'instant.",settings:"Paramètres",language:"Langue",currency:"Devise",wrongPin:"Code incorrect, réessaie",notEnough:"Solde insuffisant !",sent:"Argent envoyé !",approved:"Tâche approuvée !",rejectedMsg:"Tâche refusée",kidNamePh:"Nom de l'enfant",kidPinPh:"Code à 4 chiffres",card:"Carte",tapCard:"Touche la carte pour la retourner",noKidsYet:"Aucun enfant ajouté.",resetAll:"Réinitialiser (tout supprimer)",confirmReset:"Tout supprimer et recommencer ?",installTip:"Pour installer : menu du navigateur > 'Ajouter à l'écran d'accueil'.",altLoginTip:"Les enfants peuvent se connecter depuis n'importe quel appareil — tout est sauvegardé sur le compte familial.",scanQr:"📷 Scanner un code QR",closeScan:"Fermer",cameraDenied:"Impossible d'ouvrir la caméra",give:"Donner de l'argent",giveTitle:"Donner de l'argent à",directAmount:"Montant à donner",directNote:"Note (optionnel)",kidsTab:"Enfants",historyTab:"Historique",totalGiven:"Total donné",totalWon:"Total gagné",totalLost:"Tâches perdues",noParentHistory:"Aucune activité.",loading:"Chargement de ton compte…",scanHelp:"Pointe la caméra vers un code QR PiggyPay",familyCode:"Code famille",continue:"Continuer",newFamily:"Nouvelle famille ? Crée un compte",shareCode:"Code famille (pour connecter les enfants)",payTo:"Payer",qrAmount:"Montant à demander (optionnel)",noQr:"Aucun code QR trouvé sur cette photo"},
+ru:{appname:"PiggyPay",imParent:"Я родитель",imKid:"Я ребёнок",createAccount:"Создай аккаунт",yourName:"Твоё имя",choosePin:"Придумай PIN из 4 цифр",createBtn:"Создать аккаунт",parentLogin:"Вход для родителей",enterPin:"Введи PIN",addKid:"+ Добавить ребёнка",kids:"Дети",balance:"Баланс",addTask:"+ Добавить задание",taskTitle:"Какое задание?",taskPrice:"Награда",add:"Добавить",pending:"Ждёт подтверждения",approve:"Подтвердить",reject:"Отклонить",tasksFor:"Задания",back:"Назад",logout:"Выйти",whoAreYou:"Кто ты?",kidPin:"Введи PIN",myTasks:"Мои задания",markDone:"Готово",send:"Отправить",history:"История",noTasks:"Заданий пока нет — спроси родителей!",sendMoney:"Отправить деньги",toWho:"Кому (код)",amount:"Сумма",note:"Заметка (необязательно)",sendBtn:"Отправить!",myCode:"Мой код — пусть отсканируют",receive:"Получить",noHistory:"Пока пусто.",settings:"Настройки",language:"Язык",currency:"Валюта",wrongPin:"Неверный PIN, попробуй снова",notEnough:"Недостаточно средств!",sent:"Деньги отправлены!",approved:"Задание подтверждено!",rejectedMsg:"Задание отклонено",kidNamePh:"Имя ребёнка",kidPinPh:"PIN из 4 цифр",card:"Карта",tapCard:"Нажми на карту, чтобы перевернуть",noKidsYet:"Пока нет детей.",resetAll:"Сбросить (удалить всё)",confirmReset:"Удалить всё и начать заново?",installTip:"Чтобы установить: меню браузера > 'Добавить на главный экран'.",altLoginTip:"Дети могут входить с любого устройства — всё сохраняется в семейном аккаунте.",scanQr:"📷 Сканировать QR-код",closeScan:"Закрыть",cameraDenied:"Не удалось открыть камеру",give:"Дать деньги",giveTitle:"Дать деньги",directAmount:"Сумма",directNote:"Заметка (необязательно)",kidsTab:"Дети",historyTab:"История",totalGiven:"Всего дано",totalWon:"Всего заработано",totalLost:"Заданий отклонено",noParentHistory:"Пока нет активности.",loading:"Загружаем твой аккаунт…",scanHelp:"Наведи камеру на QR-код PiggyPay"},
+ar:{appname:"بيغي باي",imParent:"أنا ولي أمر",imKid:"أنا طفل",createAccount:"أنشئ حسابك",yourName:"اسمك",choosePin:"اختر رمزًا من 4 أرقام",createBtn:"إنشاء حساب",parentLogin:"دخول ولي الأمر",enterPin:"أدخل الرمز",addKid:"+ إضافة طفل",kids:"الأطفال",balance:"الرصيد",addTask:"+ إضافة مهمة",taskTitle:"ما هي المهمة؟",taskPrice:"المكافأة",add:"إضافة",pending:"بانتظار الموافقة",approve:"موافقة",reject:"رفض",tasksFor:"المهام",back:"رجوع",logout:"تسجيل خروج",whoAreYou:"من أنت؟",kidPin:"أدخل الرمز",myTasks:"مهامي",markDone:"تم الإنجاز",send:"إرسال",history:"السجل",noTasks:"لا توجد مهام — اسأل والديك!",sendMoney:"إرسال أموال",toWho:"إرسال إلى (الرمز)",amount:"المبلغ",note:"ملاحظة (اختياري)",sendBtn:"إرسال!",myCode:"رمزي — اطلب من أحد مسحه",receive:"استلام",noHistory:"لا يوجد شيء بعد.",settings:"الإعدادات",language:"اللغة",currency:"العملة",wrongPin:"رمز خاطئ، حاول مجددًا",notEnough:"الرصيد غير كافٍ!",sent:"تم إرسال المال!",approved:"تمت الموافقة على المهمة!",rejectedMsg:"تم رفض المهمة",kidNamePh:"اسم الطفل",kidPinPh:"رمز من 4 أرقام",card:"البطاقة",tapCard:"اضغط على البطاقة لقلبها",noKidsYet:"لم تتم إضافة أي طفل بعد.",resetAll:"إعادة ضبط (حذف كل شيء)",confirmReset:"حذف كل البيانات والبدء من جديد؟",installTip:"للتثبيت: افتح قائمة المتصفح واختر 'إضافة إلى الشاشة الرئيسية'.",altLoginTip:"يمكن للأطفال الدخول من أي جهاز — كل شيء محفوظ في حساب العائلة.",scanQr:"📷 مسح رمز QR",closeScan:"إغلاق",cameraDenied:"تعذر فتح الكاميرا",give:"إعطاء مال",giveTitle:"إعطاء مال إلى",directAmount:"المبلغ",directNote:"ملاحظة (اختياري)",kidsTab:"الأطفال",historyTab:"السجل",totalGiven:"إجمالي المُعطى",totalWon:"إجمالي المكتسب",totalLost:"مهام مرفوضة",noParentHistory:"لا نشاط بعد.",loading:"جارٍ تحميل حسابك…",scanHelp:"وجّه الكاميرا نحو رمز QR الخاص بـ PiggyPay"}
+};
+
+Object.assign(T.en,{featQrTitle:"Send money with a QR code",featQrDesc:"Scan a friend's PiggyPay QR to pay them instantly — or show yours to get paid.",installTitle:"Install the app",installDesc:"Add PiggyPay to your home screen and open it like a real app.",installBtn:"Install",installIos:"On iPhone/iPad: tap the Share button, then 'Add to Home Screen'.",installedMsg:"PiggyPay is installed!"});
+Object.assign(T.es,{featQrTitle:"Envía dinero con un código QR",featQrDesc:"Escanea el QR de un amigo para pagarle al instante, o muestra el tuyo para recibir.",installTitle:"Instala la app",installDesc:"Añade PiggyPay a tu pantalla de inicio y ábrela como una app de verdad.",installBtn:"Instalar",installIos:"En iPhone/iPad: toca Compartir y luego 'Añadir a pantalla de inicio'.",installedMsg:"¡PiggyPay instalada!"});
+Object.assign(T.fr,{featQrTitle:"Envoie de l'argent avec un code QR",featQrDesc:"Scanne le QR d'un ami pour le payer tout de suite, ou montre le tien pour être payé.",installTitle:"Installe l'appli",installDesc:"Ajoute PiggyPay à ton écran d'accueil et ouvre-la comme une vraie appli.",installBtn:"Installer",installIos:"Sur iPhone/iPad : touche Partager, puis 'Sur l'écran d'accueil'.",installedMsg:"PiggyPay est installée !"});
+Object.assign(T.ru,{featQrTitle:"Отправляй деньги по QR-коду",featQrDesc:"Отсканируй QR друга, чтобы сразу заплатить, или покажи свой, чтобы получить деньги.",installTitle:"Установи приложение",installDesc:"Добавь PiggyPay на главный экран и открывай как настоящее приложение.",installBtn:"Установить",installIos:"На iPhone/iPad: нажми «Поделиться», затем «На экран Домой».",installedMsg:"PiggyPay установлено!"});
+Object.assign(T.ar,{featQrTitle:"أرسل المال برمز QR",featQrDesc:"امسح رمز QR لصديق لتدفع له فورًا، أو اعرض رمزك لتستلم المال.",installTitle:"ثبّت التطبيق",installDesc:"أضف PiggyPay إلى شاشتك الرئيسية وافتحه كتطبيق حقيقي.",installBtn:"تثبيت",installIos:"على آيفون/آيباد: اضغط زر المشاركة ثم 'إضافة إلى الشاشة الرئيسية'.",installedMsg:"تم تثبيت PiggyPay!"});
+
+// ---- PWA install support ----
+let deferredInstall=null;
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+(function setupPWA(){
+  try{
+    const mk=n=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');
+      x.fillStyle='#6C5CE7';x.fillRect(0,0,n,n);x.font=(n*0.6)+'px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🐷',n/2,n/2+n*0.04);return c.toDataURL('image/png');};
+    const i192=mk(192), i512=mk(512);
+    const l=document.createElement('link');l.rel='apple-touch-icon';l.href=i192;document.head.appendChild(l);
+    const m={name:'PiggyPay',short_name:'PiggyPay',start_url:location.href.split('#')[0],display:'standalone',background_color:'#F6F3FF',theme_color:'#6C5CE7',
+      icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    const ml=document.createElement('link');ml.rel='manifest';ml.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));document.head.appendChild(ml);
+  }catch(e){}
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;});
+  window.addEventListener('appinstalled',()=>{deferredInstall=null;toast(t('installedMsg'));if(state&&state.route&&state.route.screen==='home')render();});
+})();
+async function installApp(){
+  if(deferredInstall){ deferredInstall.prompt(); try{ await deferredInstall.userChoice; }catch(e){} deferredInstall=null; return; }
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  alert(ios?t('installIos'):t('installTip'));
+}
+
+Object.assign(T.en,{nfcPay:"📡 Tap to pay (NFC)",nfcWrite:"Write my code to an NFC tag",nfcHold:"Hold your phone against the NFC tag…",nfcNone:"NFC isn't supported on this phone or browser (needs Chrome on Android)",nfcWritten:"Saved to the NFC tag!",nfcFail:"NFC didn't work, try again",nfcHint:"Tap-to-pay works with NFC tags/stickers. Phone-to-phone taps aren't possible in a web app — use the QR code for that."});
+Object.assign(T.es,{nfcPay:"📡 Toca para pagar (NFC)",nfcWrite:"Guardar mi código en una etiqueta NFC",nfcHold:"Acerca tu teléfono a la etiqueta NFC…",nfcNone:"NFC no está disponible en este teléfono o navegador (requiere Chrome en Android)",nfcWritten:"¡Guardado en la etiqueta NFC!",nfcFail:"NFC no funcionó, intenta de nuevo",nfcHint:"El pago por toque funciona con etiquetas NFC. Entre dos teléfonos no es posible en una web app — usa el código QR."});
+Object.assign(T.fr,{nfcPay:"📡 Approcher pour payer (NFC)",nfcWrite:"Écrire mon code sur une étiquette NFC",nfcHold:"Approche ton téléphone de l'étiquette NFC…",nfcNone:"NFC non pris en charge sur ce téléphone ou navigateur (Chrome sur Android requis)",nfcWritten:"Enregistré sur l'étiquette NFC !",nfcFail:"Le NFC n'a pas fonctionné, réessaie",nfcHint:"Le paiement par contact fonctionne avec des étiquettes NFC. Entre deux téléphones, ce n'est pas possible dans une web app — utilise le code QR."});
+Object.assign(T.ru,{nfcPay:"📡 Оплата касанием (NFC)",nfcWrite:"Записать мой код на NFC-метку",nfcHold:"Поднеси телефон к NFC-метке…",nfcNone:"NFC не поддерживается на этом телефоне или в браузере (нужен Chrome на Android)",nfcWritten:"Записано на NFC-метку!",nfcFail:"NFC не сработал, попробуй снова",nfcHint:"Оплата касанием работает с NFC-метками. Между двумя телефонами в веб-приложении это невозможно — используй QR-код."});
+Object.assign(T.ar,{nfcPay:"📡 اضغط للدفع (NFC)",nfcWrite:"اكتب رمزي على بطاقة NFC",nfcHold:"قرّب هاتفك من بطاقة NFC…",nfcNone:"NFC غير مدعوم على هذا الهاتف أو المتصفح (يتطلب Chrome على أندرويد)",nfcWritten:"تم الحفظ على بطاقة NFC!",nfcFail:"لم ينجح NFC، حاول مجددًا",nfcHint:"الدفع باللمس يعمل مع بطاقات NFC. اللمس بين هاتفين غير ممكن في تطبيق ويب — استخدم رمز QR."});
+
+// ---- NFC (Web NFC: Chrome on Android, HTTPS only) ----
+let nfcAbort=null;
+function nfcOK(){ return 'NDEFReader' in window; }
+async function nfcPay(){
+  if(!nfcOK()){ toast(t('nfcNone')); return; }
+  try{
+    if(nfcAbort) nfcAbort.abort();
+    nfcAbort=new AbortController();
+    const rd=new NDEFReader();
+    await rd.scan({signal:nfcAbort.signal});
+    toast(t('nfcHold'));
+    rd.onreading=e=>{
+      for(const rec of e.message.records){
+        try{
+          const txt=new TextDecoder(rec.encoding||'utf-8').decode(rec.data);
+          if(/piggypay:/i.test(txt)){ nfcAbort.abort(); onScanned(txt); return; }
+        }catch(_){}
+      }
+    };
+    rd.onreadingerror=()=>toast(t('nfcFail'));
+  }catch(err){ toast(t('nfcFail')); }
+}
+async function nfcWrite(){
+  if(!nfcOK()){ toast(t('nfcNone')); return; }
+  const k=state.kids.find(x=>x.id===state.selfId); if(!k) return;
+  const a=parseFloat(($('qrAmt')||{}).value);
+  try{
+    toast(t('nfcHold'));
+    await new NDEFReader().write({records:[{recordType:'text',data:'piggypay:'+k.paycode+(a>0?':'+a:'')}]});
+    toast(t('nfcWritten'));
+  }catch(err){ toast(t('nfcFail')); }
+}
+const CURRENCIES = [
+["USD","$"],["EUR","€"],["GBP","£"],["MAD","DH"],["JPY","¥"],["CNY","¥"],["RUB","₽"],["INR","₹"],
+["CAD","C$"],["AUD","A$"],["CHF","CHF"],["BRL","R$"],["MXN","MX$"],["AED","AED"],["SAR","SAR"],["EGP","E£"],
+["TRY","₺"],["KRW","₩"],["SEK","kr"],["NOK","kr"],["DKK","kr"],["PLN","zł"],["ZAR","R"],["NGN","₦"],
+["ARS","AR$"],["CLP","CL$"],["COP","CO$"],["PKR","₨"],["BDT","৳"],["IDR","Rp"],["THB","฿"],["VND","₫"],
+["PHP","₱"],["MYR","RM"],["SGD","S$"],["NZD","NZ$"],["ILS","₪"],["HKD","HK$"],["CZK","Kč"],["HUF","Ft"],["UAH","₴"]
+];
+const AVATAR_COLORS = ["#6C5CE7","#FF6FA0","#00C9A0","#FFC857","#5B8DEF"];
+
+const SB_URL='https://gjtlwcuhcczsurdmtvac.supabase.co';
+const SB_KEY='sb_publishable_Sk2xrYjZDHhyddyjJz4u_g_tvRqyzYO';
+const LS='piggypay_v2';
+let state=null, busy=false;
+const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function defaultState(){ return {lang:'en',currency:'USD',parent:null,kids:[],token:null,role:null,code:'',selfId:null,route:{screen:'home'}}; }
+function loadLocal(){ try{ const r=localStorage.getItem(LS); if(r) return Object.assign(defaultState(),JSON.parse(r)); }catch(e){} return defaultState(); }
+async function rpc(fn,args){
+  const res=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY},body:JSON.stringify(args||{})});
+  const data=await res.json().catch(()=>null);
+  if(!res.ok) throw new Error((data&&data.message)||'Connection problem');
+  if(data&&data.error) throw new Error(data.error);
+  return data;
+}
+async function refresh(){
+  const d=await rpc('pp_state',{p_token:state.token});
+  state.parent=d.parent; state.kids=d.kids; state.role=d.role; state.selfId=d.self; state.code=d.code;
+  if(d.lang) state.lang=d.lang; if(d.currency) state.currency=d.currency;
+}
+async function act(fn,args){
+  if(busy) throw new Error('');
+  busy=true;
+  try{ const r=await rpc(fn,Object.assign({p_token:state.token},args)); await refresh(); return r; }
+  catch(e){ if(e.message) toast(e.message); throw e; }
+  finally{ busy=false; }
+}
+async function boot(){
+  $('app').innerHTML = `<div class="screen" style="text-align:center;padding-top:120px;"><div class="emoji-big">🐷</div>${T.en.loading}</div>`;
+  state=loadLocal();
+  if(state.token){ try{ await refresh(); }catch(e){ state.token=null; state.role=null; state.kids=[]; } }
+  if(!state.token || !state.route || state.route.screen==='auth') state.route={screen:'home'};
+  render();
+  setInterval(poll,15000);
+}
+async function poll(){
+  if(!state.token||busy||document.hidden||!['parentHome','kidHome'].includes(state.route.screen)) return;
+  const a=document.activeElement; if(a&&/INPUT|SELECT/.test(a.tagName)) return;
+  try{ const b=JSON.stringify(state.kids); await refresh(); if(JSON.stringify(state.kids)!==b) render(); }catch(e){}
+}
+function save(){
+  try{ const r=Object.assign({},state.route); delete r._entered;
+    localStorage.setItem(LS,JSON.stringify({lang:state.lang,currency:state.currency,token:state.token,role:state.role,code:state.code,selfId:state.selfId,route:r})); }catch(e){}
+}
+function syncSettings(){ if(state.token) rpc('pp_settings',{p_token:state.token,p_lang:state.lang,p_cur:state.currency}).catch(()=>{}); }
+function logout(){
+  if(state.token) rpc('pp_logout',{p_token:state.token}).catch(()=>{});
+  state.token=null; state.role=null; state.kids=[]; state.parent=null; go('home');
+}
+function t(k){ return (T[state.lang]||T.en)[k] || T.en[k] || k; }
+function sym(){ const c = CURRENCIES.find(c=>c[0]===state.currency); return c?c[1]:'$'; }
+function money(n){ return sym()+Number(n||0).toFixed(2); }
+function uid(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
+function toast(msg){
+  const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 1800);
+}
+function confettiBurst(){
+  const el = document.createElement('div'); el.className='confetti';
+  const em = ['🎉','✨','💰','🎊','⭐'];
+  for(let i=0;i<18;i++){
+    const s = document.createElement('span');
+    s.textContent = em[i%em.length];
+    s.style.left = Math.random()*100+'%';
+    s.style.animationDelay = (Math.random()*.3)+'s';
+    el.appendChild(s);
+  }
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1700);
+}
+function go(screen, params={}){ state.route = {screen, ...params}; save(); render(); }
+function addHist(k, entry){ k.history.push(Object.assign({date:Date.now()}, entry)); }
+
+function render(){
+  if(!state.token && ['parentHome','kidHome','addKid','addTask','giveMoney'].includes(state.route.screen)) state.route={screen:'home'};
+  document.documentElement.dir = state.lang==='ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = state.lang;
+  const app = document.getElementById('app');
+  app.innerHTML = topbar() + screenHTML();
+  wireCommon();
+  wireScreen();
+  if(state.route.screen==='kidHome' && state.route.tab==='send') drawQR();
+}
+function topbar(){
+  const langOpts = Object.keys(T).map(l=>`<option value="${l}" ${l===state.lang?'selected':''}>${({en:'EN',es:'ES',fr:'FR',ru:'RU',ar:'AR'})[l]}</option>`).join('');
+  const curOpts = CURRENCIES.map(c=>`<option value="${c[0]}" ${c[0]===state.currency?'selected':''}>${c[0]}</option>`).join('');
+  return `<div class="topbar">
+    <div class="brand"><span class="oink">🐷</span>${t('appname')}</div>
+    <div class="pickers">
+      <select class="mini" id="langSel">${langOpts}</select>
+      <select class="mini" id="curSel">${curOpts}</select>
+    </div>
+  </div>`;
+}
+function wireCommon(){
+  document.getElementById('langSel').onchange = e=>{ state.lang=e.target.value; save(); syncSettings(); render(); };
+  document.getElementById('curSel').onchange = e=>{ state.currency=e.target.value; save(); syncSettings(); render(); };
+}
+
+function screenHTML(){
+  const r = state.route.screen;
+  if(r==='home') return sHome();
+  if(r==='parentCreate') return sParentCreate();
+  if(r==='parentLogin') return sParentLogin();
+  if(r==='parentHome') return sParentHome(state.route.ptab||'kids');
+  if(r==='addKid') return sAddKid();
+  if(r==='addTask') return sAddTask(state.route.kidId);
+  if(r==='giveMoney') return sGiveMoney(state.route.kidId);
+  if(r==='kidPick') return sKidPick();
+  if(r==='kidLogin') return sKidLogin(state.route.kidId);
+  if(r==='kidHome') return sKidHome(state.route.tab||'tasks');
+  if(r==='auth') return sAuth();
+  return sHome();
+}
+
+function sAuth(){
+  const r=state.route, kid=r.who==='kid', step=r.step||1;
+  const back=`<div class="back-link" id="btnBack">← ${t('back')}</div>`;
+  const av=k=>`<div class="avatar" style="background:${esc(k.color)}">${esc((k.name[0]||'?').toUpperCase())}</div>`;
+  const codeIn=`<div class="field"><label>${t('familyCode')}</label><input type="text" id="aCode" value="${esc(state.code)}" placeholder="ABC123" autocapitalize="characters" autocomplete="off"></div>`;
+  if(kid&&step===1) return `<div class="screen"><div class="emoji-big">🧒</div><h2 style="text-align:center;">${t('imKid')}</h2>${codeIn}<button class="card-btn primary" id="btnCode">${t('continue')}</button>${back}</div>`;
+  if(kid&&step===2) return `<div class="screen"><h2>${t('whoAreYou')}</h2>${state.kidList.map(k=>`<div class="kidchip" data-pick="${esc(k.id)}">${av(k)}<div style="font-weight:800;">${esc(k.name)}</div></div>`).join('')}${back}</div>`;
+  const who=kid?state.kidList.find(k=>k.id===r.kidId):null;
+  return `<div class="screen">${kid?`<div style="display:flex;justify-content:center;margin:14px 0;">${av(who)}</div>`:'<div class="emoji-big">🔒</div>'}<h2 style="text-align:center;">${kid?esc(who.name):t('parentLogin')}</h2>${kid?'':codeIn}<p style="text-align:center;color:#7b74ad;">${t('enterPin')}</p><div class="dots" id="dots">${pinDots(r._entered||'')}</div><div class="pinpad" id="pad">${pinPad()}</div>${kid?'':`<button class="card-btn ghost" id="btnNew">${t('newFamily')}</button>`}${back}</div>`;
+}
+function sHome(){
+  return `<div class="screen">
+    <div class="emoji-big">🐷💳</div>
+    <h1 style="text-align:center;margin:0 0 4px;">${t('appname')}</h1>
+    <p style="text-align:center;color:#7b74ad;margin-top:0;">${t('whoAreYou')}</p>
+    <button class="card-btn primary" id="btnParent">👪 ${t('imParent')}</button>
+    <button class="card-btn" id="btnKid">🧒 ${t('imKid')}</button>
+    <div class="feat"><div class="ficon">📷</div><div><b>${t('featQrTitle')}</b><span class="d">${t('featQrDesc')}</span></div></div>
+    ${isStandalone()?'':`<div class="feat install"><div class="ficon">📲</div><div><b>${t('installTitle')}</b><span class="d">${t('installDesc')}</span></div><button class="smallbtn" id="btnInstall">${t('installBtn')}</button></div>`}
+    <p class="hint" style="text-align:center;margin-top:18px;">${t('altLoginTip')}</p>
+  </div>`;
+}
+function sParentCreate(){
+  return `<div class="screen">
+    <div class="emoji-big">👪</div>
+    <h2 style="text-align:center;">${t('createAccount')}</h2>
+    <div class="field"><label>${t('yourName')}</label><input type="text" id="pName" placeholder="${t('yourName')}"></div>
+    <div class="field"><label>${t('choosePin')}</label><input type="password" id="pPin" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+    <button class="card-btn primary" id="btnCreate">${t('createBtn')}</button>
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+  </div>`;
+}
+function sParentLogin(){
+  return `<div class="screen">
+    <div class="emoji-big">🔒</div>
+    <h2 style="text-align:center;">${t('parentLogin')}</h2>
+    <p style="text-align:center;color:#7b74ad;">${esc(state.parent.name)}</p>
+    <div class="dots" id="dots">${pinDots(state.route._entered||'')}</div>
+    <div class="pinpad" id="pad">${pinPad()}</div>
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+    <div class="back-link" id="btnReset" style="color:#d97757;">🗑 ${t('resetAll')}</div>
+  </div>`;
+}
+function pinDots(entered){
+  let h=''; for(let i=0;i<4;i++) h+=`<div class="dot ${i<entered.length?'filled':''}"></div>`; return h;
+}
+function pinPad(){
+  let h=''; for(let n=1;n<=9;n++) h+=`<button data-n="${n}">${n}</button>`;
+  h+=`<button data-n="clear">⌫</button><button data-n="0">0</button><button data-n="ok">✓</button>`;
+  return h;
+}
+function sParentHome(ptab){
+  const tabsBar = `<div class="tabs">
+    <div class="tab ${ptab==='kids'?'active':''}" data-ptab="kids">👪 ${t('kidsTab')}</div>
+    <div class="tab ${ptab==='history'?'active':''}" data-ptab="history">🧾 ${t('historyTab')}</div>
+  </div>`;
+  let body;
+  if(ptab==='kids'){
+    body = state.kids.length ? state.kids.map(k=>`
+      <div class="kidchip">
+        <div class="avatar" style="background:${k.color}">${esc(k.name[0].toUpperCase())}</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;">${esc(k.name)}</div>
+          <div style="color:#7b74ad;font-size:13px;">${t('balance')}: ${money(k.balance)}</div>
+        </div>
+        <div class="actions">
+          <button class="smallbtn" data-addtask="${k.id}" style="flex:1;">${t('addTask')}</button>
+          <button class="smallbtn" data-give="${k.id}" style="flex:1;background:var(--yellow);color:#5c4200;">${t('give')}</button>
+        </div>
+      </div>
+      ${k.tasks.filter(x=>x.status==='pending').map(x=>`
+        <div class="task" style="margin-left:14px;">
+          <div class="info"><div style="font-weight:700;">${esc(x.title)}</div><span class="pill pending">${t('pending')}</span></div>
+          <div class="price">${money(x.price)}</div>
+          <button class="smallbtn approve" data-approve="${k.id}:${x.id}">✓</button>
+          <button class="smallbtn reject" data-reject="${k.id}:${x.id}">✕</button>
+        </div>`).join('')}
+    `).join('') : `<p class="hint">${t('noKidsYet')}</p>`;
+    body += `<button class="card-btn" id="btnAddKid">${t('addKid')}</button>`;
+  } else {
+    let given=0, won=0, lost=0;
+    const rows = [];
+    state.kids.forEach(k=>{
+      k.history.forEach(h=>{
+        if(h.kind==='parent_send') given += h.amount;
+        if(h.kind==='task_won') won += h.amount;
+        if(h.kind==='task_lost') lost += 1;
+        rows.push(Object.assign({kidName:k.name}, h));
+      });
+    });
+    rows.sort((a,b)=>b.date-a.date);
+    body = `<div class="totals">
+      <div class="totalbox"><b>${money(given)}</b>${t('totalGiven')}</div>
+      <div class="totalbox"><b>${money(won)}</b>${t('totalWon')}</div>
+      <div class="totalbox"><b>${lost}</b>${t('totalLost')}</div>
+    </div>`;
+    body += rows.length ? rows.map(h=>`
+      <div class="hist"><span>${esc(h.note)}<div class="who">${esc(h.kidName)}</div></span><span class="amt ${h.amount>=0?'pos':'neg'}">${h.amount>=0?'+':''}${money(h.amount)}</span></div>
+    `).join('') : `<p class="hint">${t('noParentHistory')}</p>`;
+  }
+  return `<div class="screen">
+    <h2>${t('kids')}</h2>
+    <p class="hint" style="margin:0 0 4px;">${t('shareCode')}: <b style="font-size:17px;letter-spacing:2px;color:var(--purple-d);">${esc(state.code)}</b></p>
+    ${tabsBar}
+    ${body}
+    <button class="card-btn ghost" id="btnLogout">${t('logout')}</button>
+    <div class="back-link" id="btnReset" style="color:#d97757;margin-top:14px;">🗑 ${t('resetAll')}</div>
+  </div>`;
+}
+function sAddKid(){
+  return `<div class="screen">
+    <div class="emoji-big">🧒</div>
+    <h2 style="text-align:center;">${t('addKid')}</h2>
+    <div class="field"><label>${t('yourName')}</label><input type="text" id="kName" placeholder="${t('kidNamePh')}"></div>
+    <div class="field"><label>${t('choosePin')}</label><input type="password" id="kPin" maxlength="4" inputmode="numeric" placeholder="${t('kidPinPh')}"></div>
+    <button class="card-btn primary" id="btnSaveKid">${t('createBtn')}</button>
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+  </div>`;
+}
+function sAddTask(kidId){
+  return `<div class="screen">
+    <div class="emoji-big">📋</div>
+    <h2 style="text-align:center;">${t('addTask')}</h2>
+    <div class="field"><label>${t('taskTitle')}</label><input type="text" id="tTitle" placeholder="${t('taskTitle')}"></div>
+    <div class="field"><label>${t('taskPrice')}</label><input type="number" step="0.01" min="0" id="tPrice" placeholder="${sym()}0.00"></div>
+    <button class="card-btn primary" id="btnSaveTask" data-kid="${kidId}">${t('add')}</button>
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+  </div>`;
+}
+function sGiveMoney(kidId){
+  const k = state.kids.find(x=>x.id===kidId);
+  return `<div class="screen">
+    <div class="emoji-big">💛</div>
+    <h2 style="text-align:center;">${t('giveTitle')} ${esc(k.name)}</h2>
+    <div class="field"><label>${t('directAmount')}</label><input type="number" step="0.01" min="0.01" id="gAmt" placeholder="${sym()}0.00"></div>
+    <div class="field"><label>${t('directNote')}</label><input type="text" id="gNote" placeholder="🎁"></div>
+    <button class="card-btn primary" id="btnGive" data-kid="${kidId}">${t('give')}</button>
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+  </div>`;
+}
+function sKidPick(){
+  if(!state.kids.length) return `<div class="screen"><p class="hint">${t('noKidsYet')}</p><div class="back-link" id="btnBack">← ${t('back')}</div></div>`;
+  return `<div class="screen">
+    <h2>${t('whoAreYou')}</h2>
+    ${state.kids.map(k=>`<div class="kidchip" data-pick="${k.id}"><div class="avatar" style="background:${k.color}">${esc(k.name[0].toUpperCase())}</div><div style="font-weight:800;">${esc(k.name)}</div></div>`).join('')}
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+  </div>`;
+}
+function sKidLogin(kidId){
+  const k = state.kids.find(x=>x.id===kidId);
+  return `<div class="screen">
+    <div class="avatar" style="background:${k.color};margin:14px auto;width:64px;height:64px;font-size:26px;">${esc(k.name[0].toUpperCase())}</div>
+    <h2 style="text-align:center;">${esc(k.name)}</h2>
+    <p style="text-align:center;color:#7b74ad;">${t('kidPin')}</p>
+    <div class="dots" id="dots">${pinDots(state.route._entered||'')}</div>
+    <div class="pinpad" id="pad">${pinPad()}</div>
+    <div class="back-link" id="btnBack">← ${t('back')}</div>
+  </div>`;
+}
+function sKidHome(tab){
+  const k = state.kids.find(x=>x.id===state.route.kidId);
+  const tasksHTML = k.tasks.length ? k.tasks.map(x=>`
+    <div class="task">
+      <div class="info"><div style="font-weight:700;">${esc(x.title)}</div>
+        ${x.status==='todo'?'':`<span class="pill ${x.status==='pending'?'pending':(x.status==='rejected'?'rejected':'done')}">${x.status==='pending'?t('pending'):(x.status==='rejected'?t('rejectedMsg'):t('approved'))}</span>`}</div>
+      <div class="price">${money(x.price)}</div>
+      ${x.status==='todo'?`<button class="smallbtn" data-done="${x.id}">${t('markDone')}</button>`:''}
+    </div>`).join('') : `<p class="hint">${t('noTasks')}</p>`;
+
+  const otherKids = state.kids.filter(x=>x.id!==k.id);
+  const histHTML = k.history.length ? k.history.slice().reverse().map(h=>`
+    <div class="hist"><span>${esc(h.note)}</span><span class="amt ${h.amount>=0?'pos':'neg'}">${h.amount>=0?'+':''}${money(h.amount)}</span></div>
+  `).join('') : `<p class="hint">${t('noHistory')}</p>`;
+
+  let body = '';
+  if(tab==='tasks') body = `<h3>${t('myTasks')}</h3>${tasksHTML}`;
+  else if(tab==='send') body = `<h3>${t('sendMoney')}</h3>
+    <div style="display:flex;gap:8px;"><button class="card-btn" id="btnScan" style="margin-top:8px;">${t('scanQr')}</button><button class="card-btn" id="btnScanImg" style="margin-top:8px;flex:0 0 68px;width:68px;padding:20px 0;">🖼</button></div>
+    <input type="file" accept="image/*" id="qrFile" class="hidden">
+    <button class="card-btn" id="btnNfcPay" style="margin-top:8px;">${t('nfcPay')}</button>
+    <div class="field"><label>${t('toWho')}</label><input type="text" id="sendToManual" placeholder="$Name123"></div>
+    <div class="field"><label>${t('amount')}</label><input type="number" min="0.01" step="0.01" id="sendAmt" placeholder="${sym()}0.00"></div>
+    <div class="field"><label>${t('note')}</label><input type="text" id="sendNote" placeholder="🎁"></div>
+    <button class="card-btn primary" id="btnSend">${t('sendBtn')}</button>
+    <h3 style="margin-top:26px;">${t('receive')}</h3>
+    <div class="field"><label>${t('qrAmount')}</label><input type="number" min="0" step="0.01" id="qrAmt" placeholder="${sym()}0.00"></div>
+    <div class="qr" id="qrbox"></div>
+    <div class="paycode">${k.paycode}</div><p class="hint" style="text-align:center;">${t('myCode')}</p>
+    <button class="card-btn ghost" id="btnNfcWrite" style="margin-top:6px;">${t('nfcWrite')}</button>
+    <p class="hint" style="text-align:center;">${t('nfcHint')}</p>`;
+  else body = `<h3>${t('history')}</h3>${histHTML}`;
+
+  return `<div class="screen">
+    <div class="flipcard" id="flip">
+      <div class="flipcard-inner">
+        <div class="face front">
+          <div class="brandmini">🐷 PiggyPay</div>
+          <div><div class="balance-label">${t('balance')}</div><div class="balance">${money(k.balance)}</div></div>
+          <div style="font-weight:700;">${esc(k.name)}</div>
+        </div>
+        <div class="face back">
+          <div class="stripe"></div>
+          <div class="cardnum">${k.cardNumber}</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;opacity:.8;"><span>${t('card')}</span><span>${k.paycode}</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" style="text-align:center;">${t('tapCard')}</p>
+    <div class="tabs">
+      <div class="tab ${tab==='tasks'?'active':''}" data-tab="tasks">📋 ${t('myTasks')}</div>
+      <div class="tab ${tab==='send'?'active':''}" data-tab="send">💸 ${t('send')}</div>
+      <div class="tab ${tab==='history'?'active':''}" data-tab="history">🧾 ${t('history')}</div>
+    </div>
+    ${body}
+    <button class="card-btn ghost" id="btnLogout" style="margin-top:22px;">${t('logout')}</button>
+  </div>`;
+}
+
+let scanStream=null, scanRAF=null;
+function openScan(){
+  document.getElementById('scanModal').classList.remove('hidden');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{
+    scanStream = stream;
+    const video = document.getElementById('scanVideo');
+    video.srcObject = stream; if(video.play) video.play().catch(()=>{});
+    scanLoop();
+  }).catch(()=>{ toast(t('cameraDenied')); closeScan(); });
+}
+function scanLoop(){
+  const video = document.getElementById('scanVideo');
+  const canvas = document.getElementById('scanCanvas');
+  if(video.readyState===video.HAVE_ENOUGH_DATA && video.videoWidth){
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const code = window.jsQR ? jsQR(img.data, img.width, img.height) : null;
+    if(code && code.data){
+      closeScan(); onScanned(code.data); return;
+    }
+  }
+  scanRAF = requestAnimationFrame(scanLoop);
+}
+function closeScan(){
+  document.getElementById('scanModal').classList.add('hidden');
+  if(scanRAF) cancelAnimationFrame(scanRAF);
+  if(scanStream){ scanStream.getTracks().forEach(tr=>tr.stop()); scanStream=null; }
+}
+
+function parseQR(x){ const m=String(x).match(/(?:piggypay:|pay=)([^:&\s]+)(?::([\d.]+))?/i); return m?{code:decodeURIComponent(m[1]),amt:parseFloat(m[2])||0}:{code:String(x).trim(),amt:0}; }
+function onScanned(data){
+  const p=parseQR(data);
+  if($('sendToManual')) $('sendToManual').value=p.code;
+  if($('sendAmt')&&p.amt) $('sendAmt').value=p.amt;
+  if(p.amt) pay(p.code,p.amt,'💸'); else toast('✓ '+p.code);
+}
+function scanFile(f){
+  const img=new Image();
+  img.onload=()=>{
+    const sc=Math.min(1,1000/Math.max(img.width,img.height)), c=document.createElement('canvas');
+    c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height);
+    const d=x.getImageData(0,0,c.width,c.height), q=window.jsQR?jsQR(d.data,d.width,d.height):null;
+    URL.revokeObjectURL(img.src);
+    if(q&&q.data) onScanned(q.data); else toast(t('noQr'));
+  };
+  img.src=URL.createObjectURL(f);
+}
+function drawQR(){
+  const k=state.kids.find(x=>x.id===state.route.kidId), box=$('qrbox');
+  if(!box||!k||!window.QRCode) return;
+  const a=parseFloat(($('qrAmt')||{}).value);
+  box.innerHTML='';
+  new QRCode(box,{text:'piggypay:'+k.paycode+(a>0?':'+a:''),width:140,height:140,correctLevel:QRCode.CorrectLevel.M});
+}
+async function pay(code,amt,note){
+  const me=state.kids.find(x=>x.id===state.selfId);
+  if(me && amt>me.balance){ toast(t('notEnough')); return; }
+  let who; try{ who=await rpc('pp_lookup',{p_token:state.token,p_code:code}); }catch(e){ toast(e.message); return; }
+  if(!confirm(t('payTo')+' '+who.name+' — '+money(amt)+' ?')) return;
+  try{ await act('pp_pay',{p_code:code,p_amount:amt,p_note:note||'💸'}); confettiBurst(); toast(t('sent')); go('kidHome',{kidId:state.selfId,tab:'history'}); }catch(e){}
+}
+
+function wireScreen(){
+  const r = state.route.screen;
+  const back = id=>{ const el=document.getElementById(id); if(el) el.onclick=()=>go(r==='parentHome'||r==='kidHome'?'home':'home'); };
+  document.getElementById('btnCloseScan').onclick = closeScan;
+  if(r==='home'){
+    if($('btnInstall')) $('btnInstall').onclick=installApp;
+    $('btnParent').onclick = ()=> (state.token&&state.role==='parent') ? go('parentHome') : go('auth',{who:'parent',_entered:''});
+    $('btnKid').onclick = ()=> (state.token&&state.role==='kid') ? go('kidHome',{kidId:state.selfId,tab:'tasks'}) : go('auth',{who:'kid',step:1});
+  }
+  if(r==='parentCreate'){
+    back('btnBack');
+    $('btnCreate').onclick = async ()=>{
+      const name=$('pName').value.trim(), pin=$('pPin').value.trim();
+      if(!name || !/^\d{4}$/.test(pin)){ toast(t('choosePin')); return; }
+      try{
+        const d=await rpc('pp_family_create',{p_name:name,p_pin:pin,p_lang:state.lang,p_cur:state.currency});
+        state.token=d.token; state.role='parent'; await refresh(); go('parentHome');
+      }catch(e){ toast(e.message); }
+    };
+  }
+  if(r==='auth'){
+    const rt=state.route, kid=rt.who==='kid';
+    back('btnBack');
+    const readCode=()=>{ if($('aCode')) state.code=$('aCode').value.trim().toUpperCase(); };
+    if($('btnNew')) $('btnNew').onclick=()=>go('parentCreate');
+    if($('btnCode')) $('btnCode').onclick=async()=>{
+      readCode();
+      try{ state.kidList=await rpc('pp_kid_list',{p_code:state.code}); if(!state.kidList.length){ toast(t('noKidsYet')); return; } go('auth',{who:'kid',step:2}); }catch(e){ toast(e.message); }
+    };
+    document.querySelectorAll('[data-pick]').forEach(el=> el.onclick=()=> go('auth',{who:'kid',step:3,kidId:el.dataset.pick,_entered:''}));
+    if($('pad')) wirePinPad(async entered=>{
+      if(entered.length<4) return;
+      readCode();
+      try{
+        const d=await rpc('pp_login',{p_code:state.code,p_pin:entered,p_kid:kid?rt.kidId:null});
+        state.token=d.token; state.role=d.role; await refresh();
+        go(d.role==='kid'?'kidHome':'parentHome', d.role==='kid'?{kidId:state.selfId,tab:'tasks'}:{});
+      }catch(e){ toast(e.message); go('auth',{who:rt.who,step:rt.step,kidId:rt.kidId,_entered:''}); }
+    });
+  }
+  if(r==='parentHome'){
+    if($('btnAddKid')) $('btnAddKid').onclick = ()=> go('addKid');
+    $('btnLogout').onclick = logout;
+    $('btnReset').onclick = ()=>{ if(confirm(t('confirmReset'))) rpc('pp_reset',{p_token:state.token}).then(()=>{ state.token=null; state.role=null; state.kids=[]; go('home'); }).catch(e=>toast(e.message)); };
+    document.querySelectorAll('[data-ptab]').forEach(b=> b.onclick=()=> go('parentHome',{ptab:b.dataset.ptab}));
+    document.querySelectorAll('[data-addtask]').forEach(b=> b.onclick = ()=> go('addTask',{kidId:b.dataset.addtask}));
+    document.querySelectorAll('[data-give]').forEach(b=> b.onclick = ()=> go('giveMoney',{kidId:b.dataset.give}));
+    document.querySelectorAll('[data-approve]').forEach(b=> b.onclick = ()=> act('pp_task_decide',{p_task:b.dataset.approve.split(':')[1],p_ok:true}).then(()=>{ confettiBurst(); toast(t('approved')); render(); }).catch(()=>{}));
+    document.querySelectorAll('[data-reject]').forEach(b=> b.onclick = ()=> act('pp_task_decide',{p_task:b.dataset.reject.split(':')[1],p_ok:false}).then(()=>{ toast(t('rejectedMsg')); render(); }).catch(()=>{}));
+  }
+  if(r==='addKid'){
+    back('btnBack');
+    $('btnSaveKid').onclick = ()=>{
+      const name=$('kName').value.trim(), pin=$('kPin').value.trim();
+      if(!name || !/^\d{4}$/.test(pin)){ toast(t('choosePin')); return; }
+      act('pp_add_kid',{p_name:name,p_pin:pin}).then(()=>go('parentHome')).catch(()=>{});
+    };
+  }
+  if(r==='addTask'){
+    back('btnBack');
+    $('btnSaveTask').onclick = ()=>{
+      const title=$('tTitle').value.trim(), price=parseFloat($('tPrice').value);
+      if(!title || !(price>=0)){ toast(t('taskTitle')); return; }
+      act('pp_add_task',{p_kid:state.route.kidId,p_title:title,p_price:price}).then(()=>go('parentHome')).catch(()=>{});
+    };
+  }
+  if(r==='giveMoney'){
+    back('btnBack');
+    $('btnGive').onclick = ()=>{
+      const amt=parseFloat($('gAmt').value), note=$('gNote').value.trim()||t('give');
+      if(!(amt>0)){ toast(t('directAmount')); return; }
+      act('pp_give',{p_kid:state.route.kidId,p_amount:amt,p_note:note}).then(()=>{ confettiBurst(); toast(t('sent')); go('parentHome'); }).catch(()=>{});
+    };
+  }
+  if(r==='kidHome'){
+    $('btnLogout').onclick = logout;
+    $('flip').onclick = function(){ this.classList.toggle('flipped'); };
+    document.querySelectorAll('[data-tab]').forEach(el=> el.onclick=()=> go('kidHome',{kidId:state.route.kidId,tab:el.dataset.tab}));
+    document.querySelectorAll('[data-done]').forEach(el=> el.onclick=()=> act('pp_task_done',{p_task:el.dataset.done}).then(()=>render()).catch(()=>{}));
+    if($('btnScan')){
+      $('btnScan').onclick = openScan;
+      $('btnNfcPay').onclick = nfcPay;
+      $('btnNfcWrite').onclick = nfcWrite;
+      $('qrAmt').oninput = drawQR;
+      $('btnScanImg').onclick = ()=> $('qrFile').click();
+      $('qrFile').onchange = e=>{ if(e.target.files[0]) scanFile(e.target.files[0]); e.target.value=''; };
+      $('btnSend').onclick = ()=>{
+        const code=$('sendToManual').value.trim(), amt=parseFloat($('sendAmt').value), note=$('sendNote').value.trim();
+        if(!code){ toast(t('toWho')); return; }
+        if(!(amt>0)){ toast(t('amount')); return; }
+        pay(code,amt,note);
+      };
+    }
+  }
+}
+function wirePinPad(onSubmit){
+  document.querySelectorAll('#pad [data-n]').forEach(btn=>{
+    btn.onclick = ()=>{
+      let entered = state.route._entered || '';
+      const n = btn.dataset.n;
+      if(n==='clear') entered = entered.slice(0,-1);
+      else if(n==='ok'){ onSubmit(entered); return; }
+      else if(entered.length<4) entered += n;
+      state.route._entered = entered; save();
+      document.getElementById('dots').innerHTML = pinDots(entered);
+      if(entered.length===4) setTimeout(()=>onSubmit(entered), 150);
+    };
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
